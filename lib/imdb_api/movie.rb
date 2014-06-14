@@ -1,0 +1,104 @@
+# encoding: UTF-8
+
+module ImdbApi
+  class Movie < Base
+  
+    def self.find(imdb_id)
+      data             = get_information(imdb_id)
+      data[:cast]      = get_cast(imdb_id)
+      data[:directors] = get_directors(imdb_id)
+      
+      return data
+    end
+
+  private
+    def self.get_directors(imdb_id)
+      doc = CacheFile.movie_cast(imdb_id)
+  
+      directings = []
+  
+      dir_as = doc.search("div#fullcredits_content").search('a').select{|a| a['href'].match(/.*ttfc_fc_dr\d+.*/)}
+  
+      if dir_as
+        dir_as.each do |a|
+          begin
+      
+            imdb_id = a['href'].gsub(/.*\/name\/(nm\d+)\/.*/, "\\1")
+        
+            directings << {imdb_id: imdb_id}
+          rescue Exception => e
+            puts "Error with movie #{self.id}:"
+            puts e
+            puts row
+          end
+        end
+      end
+  
+      return directings
+    end
+
+    def self.get_cast(imdb_id)
+      doc = CacheFile.movie_cast(imdb_id)
+  
+      cast = []
+  
+      cast_rows = ((doc/'table.cast_list')/'tr')
+  
+      cast_rows.each do |row|
+        begin
+          name_link = row.search('a').detect{|a| !a.at('span[itemprop="name"]').nil?}
+          next if name_link.nil?
+      
+          name = name_link.at('span[itemprop="name"]').inner_html.strip
+      
+          imdb_id = name_link['href'].gsub(/.*(nm\d+).*/i, "\\1")
+      
+          role_td = (row/'td.character/div')
+          if role_link = (role_td/'a').first
+            role = role_link
+          else
+            role = role_td
+          end
+      
+          role = role.inner_html.strip.gsub(/[\r\n]/, " ").squeeze(" ")
+      
+          name = fix_encoding(name)
+          role = fix_encoding(role)
+      
+          cast << {
+            :imdb_id        => imdb_id,
+            :credited_as    => name,
+            :character_name => role
+          }
+        end
+      end
+  
+      return cast
+    end
+
+    def self.get_information(imdb_id)
+      doc = CacheFile.movie_data(imdb_id)
+  
+      data = {}
+  
+      title = doc.at('h1.header')
+      
+      if (title / '.title-extra').length > 0
+        data[:title] = (title / '.title-extra').children.first.text.strip.gsub(/\A"(.*)"\z/, "\\1")
+        year = (title.at('.nobr/a') || title.at('.nobr')).inner_text.strip
+        data[:year]  = year.gsub(/[\(\)]/, "")
+      elsif (title / '.itemprop').detect{|s| s['itemprop']=='name'}
+        data[:title] = (title / '.itemprop').detect{|s| s['itemprop']=='name'}.inner_text.strip
+        year = (title.at('.nobr/a') || title.at('.nobr')).inner_text.strip
+        data[:year]  = year.gsub(/[\(\)]/, "")
+      else
+        data[:title] = title.children.first.inner_text.strip
+        data[:year]  = (title / 'span/a').first.inner_text.strip
+      end
+      
+      data[:imdb_id] = imdb_id.strip
+      
+      return data
+    end
+  end
+end
