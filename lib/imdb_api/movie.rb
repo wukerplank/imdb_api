@@ -46,21 +46,21 @@ module ImdbApi
 
       cast_rows.each do |row|
         begin
-          name_link = row.search('a').detect{|a| !a.at('span[itemprop="name"]').nil?}
+          name_link = row.search('a')[1]
           next if name_link.nil?
 
-          name = name_link.at('span[itemprop="name"]').inner_html.strip
+          name = name_link.inner_text.strip
 
           imdb_id = name_link['href'].gsub(/.*(nm\d+).*/i, "\\1")
 
-          role_td = (row/'td.character/div')
-          if role_link = (role_td/'a').first
+          role_td = row.search('td')[3]
+          if role_link = role_td.search('a').first
             role = role_link
           else
             role = role_td
           end
 
-          role = role.inner_html.strip.gsub(/[\r\n]/, " ").squeeze(" ")
+          role = role.inner_text.strip.gsub(/[\r\n]/, " ").squeeze(" ")
 
           name = fix_encoding(name)
           role = fix_encoding(role)
