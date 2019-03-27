@@ -83,8 +83,8 @@ module ImdbApi
 
       if title = doc.at('h1.header')
       elsif title = doc.at('meta[property="og:title"]')
-        data[:title] = title['content'].gsub(/^(.*)\s+\(.*?(\d{4})\)$/, "\\1")
-        data[:year]  = title['content'].gsub(/^(.*)\s+\(.*?(\d{4})\)$/, "\\2")
+        data[:title] = title['content'].gsub(/^(.*)\s+\(.*?(\d{4})\).*$/, "\\1")
+        data[:year]  = title['content'].gsub(/^(.*)\s+\(.*?(\d{4})\).*$/, "\\2")
       end
 
       if (title / '.title-extra').length > 0
