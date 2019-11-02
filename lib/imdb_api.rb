@@ -6,6 +6,7 @@ require "imdb_api/cache_file"
 require "imdb_api/gz_file"
 
 require "imdb_api/base"
+require "imdb_api/episode"
 require "imdb_api/movie"
 require "imdb_api/person"
 
