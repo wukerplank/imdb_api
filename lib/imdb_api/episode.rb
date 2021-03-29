@@ -5,6 +5,7 @@ module ImdbApi
 
     def self.find(imdb_id)
       data             = get_information(imdb_id)
+      data[:number]    = get_number(imdb_id)
       data[:cast]      = get_cast(imdb_id)
       data[:directors] = get_directors(imdb_id)
 
@@ -91,6 +92,11 @@ module ImdbApi
       data[:imdb_id] = imdb_id.strip
 
       return data
+    end
+
+    def self.get_number(imdb_id)
+      doc = CacheFile.movie_data(imdb_id)
+      return doc.at(".navigation_panel .bp_heading").inner_text.gsub(/.*Episode[[:space:]]+(\d+).*/, "\\1").to_i
     end
   end
 end
