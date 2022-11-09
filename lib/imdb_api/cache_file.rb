@@ -15,19 +15,19 @@ module ImdbApi
     def self.movie_cast(imdb_id, options={})
       options[:force] ||= false
 
-      return get("http://www.imdb.com/title/#{imdb_id}/fullcredits", "movies/cast/#{imdb_id}_cast.html.gz", options)
+      return get("https://www.imdb.com/title/#{imdb_id}/fullcredits", "movies/cast/#{imdb_id}_cast.html.gz", options)
     end
 
     def self.movie_data(imdb_id, options={})
       options[:force] ||= false
 
-      return get("http://www.imdb.com/title/#{imdb_id}", "movies/info/#{imdb_id}_movie.html.gz", options)
+      return get("https://www.imdb.com/title/#{imdb_id}", "movies/info/#{imdb_id}_movie.html.gz", options)
     end
 
     def self.person_data(imdb_id, options={})
       options[:force] ||= false
 
-      return get("http://www.imdb.com/name/#{imdb_id}", "people/#{imdb_id}.html.gz", options)
+      return get("https://www.imdb.com/name/#{imdb_id}", "people/#{imdb_id}.html.gz", options)
     end
 
   private
