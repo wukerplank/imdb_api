@@ -17,7 +17,10 @@ module ImdbApi
 
       directings = []
 
-      dir_as = doc.search("div#fullcredits_content").search('a').select{|a| a['href'].match(/.*ttfc_fc_dr\d+.*/)}
+      dir_as = doc.search("div[data-testid=sub-section-director]")
+        .search('div.name-credits--crew-content')
+        .search('a').select{|a| a['href'].match(/.*ref_=ttfc_dr_\d+.*/)}
+        .uniq { |a| a['href'] }
 
       if dir_as
         dir_as.each do |a|
