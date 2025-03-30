@@ -42,7 +42,7 @@ module ImdbApi
 
       cast = []
 
-      cast_rows = ((doc/'table.cast_list')/'tr')
+      cast_rows = ((doc/'div[data-testid=sub-section-cast]')/'li')
 
       cast_rows.each do |row|
         begin
@@ -53,8 +53,7 @@ module ImdbApi
 
           imdb_id = name_link['href'].gsub(/.*(nm\d+).*/i, "\\1")
 
-          role_td = row.search('td')[3]
-          if role_link = role_td.search('a').first
+          if role_link = row.search('a').detect { |a| a['href'].match(/.*\/characters\/.*/) }
             role = role_link
           else
             role = role_td
