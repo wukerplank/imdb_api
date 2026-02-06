@@ -36,7 +36,7 @@ module ImdbApi
 
       if !File.exist?(path) || options[:force]
         doc = agent.get(url)
-        write_cached_file(path, doc.body)
+        write_cached_file(path, doc.body) if File.exist?(ImdbApi::Base.cache_directory)
       else
         doc = Nokogiri::HTML.parse(read_cached_file(path))
       end

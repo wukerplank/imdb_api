@@ -20,11 +20,32 @@ module ImdbApi
     def self.get_directors(imdb_id)
       doc = CacheFile.movie_cast(imdb_id)
 
-      if doc.search("div[data-testid=sub-section-director]").length > 0
+      director_section = doc.search("section.ipc-page-section")
+        .detect { |section| section.at("div.ipc-title")&.inner_text&.strip&.match(/\ADirector/) }
+
+      if director_section
+        return get_directors_from_page_section(director_section)
+      elsif doc.search("div[data-testid=sub-section-director]").length > 0
         return get_directors_from_divs(doc)
       elsif doc.search("table.simpleTable")
         return get_directors_from_table(doc)
       end
+
+      return []
+    end
+
+    def self.get_directors_from_page_section(director_section)
+      directings = []
+
+      director_section.search("ul li").each do |row|
+        name_link = row.search('a').detect { |a| a['href']&.match(%r{/name/nm\d+}) && a.inner_text.strip.length > 0 }
+        next if name_link.nil?
+
+        imdb_id = name_link['href'].gsub(/.*(nm\d+).*/i, "\\1")
+        directings << {imdb_id: imdb_id}
+      end
+
+      return directings
     end
 
     def self.get_directors_from_table(doc)
@@ -83,11 +104,49 @@ module ImdbApi
     def self.get_cast(imdb_id)
       doc = CacheFile.movie_cast(imdb_id)
 
-      if (doc / 'div[data-testid=sub-section-cast]').length > 0
+      cast_section = doc.search("section.ipc-page-section")
+        .detect { |section| section.at("div.ipc-title")&.inner_text&.strip&.match(/\ACast/) }
+
+      if cast_section
+        return get_cast_from_page_section(cast_section)
+      elsif doc.at("section[data-testid=title-cast]")
         return get_cast_from_div(doc)
-      elsif (doc / 'table.cast_list').length > 0
+      elsif doc.at('table.cast_list')
         return get_cast_from_table(doc)
       end
+
+      return []
+    end
+
+    def self.get_cast_from_page_section(cast_section)
+      cast = []
+
+      cast_section.search("ul li").each do |row|
+        begin
+          name_link = row.search('a').detect { |a| a['href']&.match(%r{/name/nm\d+}) && a.inner_text.strip.length > 0 }
+          next if name_link.nil?
+
+          name    = name_link.inner_text.strip
+          imdb_id = name_link['href'].gsub(/.*(nm\d+).*/i, "\\1")
+
+          if role_link = row.search('a').detect { |a| a['href']&.match(%r{/characters/}) }
+            role = role_link.inner_text.strip.gsub(/[\r\n]/, " ").squeeze(" ")
+          else
+            role = ""
+          end
+
+          name = fix_encoding(name)
+          role = fix_encoding(role)
+
+          cast << {
+            imdb_id: imdb_id,
+            credited_as: name,
+            character_name: role
+          }
+        end
+      end
+
+      return cast
     end
 
     def self.get_cast_from_table(doc)
@@ -116,9 +175,9 @@ module ImdbApi
           role = fix_encoding(role)
 
           cast << {
-            :imdb_id        => imdb_id,
-            :credited_as    => name,
-            :character_name => role
+            imdb_id: imdb_id,
+            credited_as: name,
+            character_name: role
           }
         end
       end
@@ -143,19 +202,18 @@ module ImdbApi
 
           if role_link = row.search('a').detect { |a| a['href'].match(/.*\/characters\/.*/) }
             role = role_link
+            role = role.inner_text.strip.gsub(/[\r\n]/, " ").squeeze(" ")
           else
-            role = role_td
+            role = ""
           end
-
-          role = role.inner_text.strip.gsub(/[\r\n]/, " ").squeeze(" ")
 
           name = fix_encoding(name)
           role = fix_encoding(role)
 
           cast << {
-            :imdb_id        => imdb_id,
-            :credited_as    => name,
-            :character_name => role
+            imdb_id: imdb_id,
+            credited_as: name,
+            character_name: role
           }
         end
       end

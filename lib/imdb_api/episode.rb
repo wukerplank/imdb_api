@@ -67,9 +67,9 @@ module ImdbApi
           role = fix_encoding(role)
 
           cast << {
-            :imdb_id        => imdb_id,
-            :credited_as    => name,
-            :character_name => role
+            imdb_id: imdb_id,
+            credited_as: name,
+            character_name: role
           }
         end
       end
