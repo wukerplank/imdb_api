@@ -3,7 +3,7 @@ module ImdbApi
 
     def self.find(imdb_id)
       data = ApiClient.get_name(imdb_id)
-      {imdb_id: imdb_id, name: data['displayName']}
+      {imdb_id: imdb_id, name: data['name']}
     end
 
   end

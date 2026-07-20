@@ -9,10 +9,10 @@ module ImdbApi
 
       data             = {}
       data[:imdb_id]   = imdb_id
-      data[:title]     = title_data['primaryTitle']
-      data[:year]      = title_data['startYear']&.to_s
-      data[:number]    = nil  # not available from /titles/{id} endpoint
-      data[:directors] = extract_directors(title_data)
+      data[:title]     = title_data['title']
+      data[:year]      = extract_year(title_data)
+      data[:number]    = nil  # not available from /movie/{id} endpoint
+      data[:directors] = extract_directors(credits_data)
       data[:cast]      = extract_cast(credits_data)
 
       return data
@@ -20,23 +20,29 @@ module ImdbApi
 
   private
 
-    def self.extract_directors(title_data)
-      (title_data['directors'] || []).map { |d| {imdb_id: d['id']} }
+    def self.extract_year(title_data)
+      release_date = title_data['release_date']
+      return nil if release_date.nil? || release_date.empty?
+
+      release_date[0, 4]
+    end
+
+    def self.extract_directors(credits)
+      (credits['crew'] || [])
+        .select { |c| c['job'] == 'Director' }
+        .filter_map { |c| c['id'] && {imdb_id: c['id']} }
     end
 
     def self.extract_cast(credits)
-      credits
-        .select { |c| ['actor', 'actress'].include?(c['category']) }
-        .filter_map do |credit|
-          name = credit['name']
-          next if name.nil?
+      (credits['cast'] || []).filter_map do |credit|
+        next if credit['id'].nil?
 
-          {
-            imdb_id:        name['id'],
-            credited_as:    name['displayName'],
-            character_name: (credit['characters'] || []).join(', ')
-          }
-        end
+        {
+          imdb_id:        credit['id'],
+          credited_as:    credit['name'],
+          character_name: credit['character'].to_s
+        }
+      end
     end
 
   end

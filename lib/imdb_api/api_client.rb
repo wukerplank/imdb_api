@@ -5,34 +5,18 @@ require 'zlib'
 
 module ImdbApi
   class ApiClient
-    BASE_URL = 'https://api.imdbapi.dev'
+    BASE_URL = 'https://api.balloonerismm.workers.dev'
 
     def self.get_title(imdb_id)
-      fetch_cached("titles/#{imdb_id}.json.gz") { get("/titles/#{imdb_id}") }
+      fetch_cached("movie/#{imdb_id}.json.gz") { get("/movie/#{imdb_id}") }
     end
 
     def self.get_title_credits(imdb_id)
-      fetch_cached("titles/#{imdb_id}_credits.json.gz") do
-        credits = []
-        page_token = nil
-
-        loop do
-          path = "/titles/#{imdb_id}/credits?pageSize=50"
-          path += "&pageToken=#{page_token}" if page_token
-
-          response = get(path)
-          credits.concat(response['credits'] || [])
-
-          page_token = response['nextPageToken']
-          break if page_token.nil? || page_token.empty?
-        end
-
-        credits
-      end
+      fetch_cached("movie/#{imdb_id}_credits.json.gz") { get("/movie/#{imdb_id}/credits") }
     end
 
     def self.get_name(imdb_id)
-      fetch_cached("names/#{imdb_id}.json.gz") { get("/names/#{imdb_id}") }
+      fetch_cached("person/#{imdb_id}.json.gz") { get("/person/#{imdb_id}") }
     end
 
   private
